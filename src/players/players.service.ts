@@ -5,13 +5,17 @@ import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class PlayersService {
-  private player: Player[] = [];
+  private players: Player[] = [];
 
   private readonly logger = new Logger(PlayersService.name);
 
   async createUpdatePlayer(createPlayerDto: CreatePlayerDto): Promise<Player> {
-    const newPlayer = await this.create(createPlayerDto);
-    return newPlayer;
+    const player = await this.create(createPlayerDto);
+    return player;
+  }
+
+  async getAllPlayers(): Promise<Player[]> {
+    return await this.players;
   }
 
   private create(createPlayerDto: CreatePlayerDto): Player {
@@ -27,7 +31,7 @@ export class PlayersService {
       urlPofilePicture: 'https://teste.com/picture.png',
     };
     this.logger.log(`createUpdatePlayer: ${JSON.stringify(player)}`);
-    this.player.push(player);
+    this.players.push(player);
     return player;
   }
 }
