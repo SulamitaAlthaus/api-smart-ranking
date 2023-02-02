@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { PlayersModule } from './players/players.module';
 import { ConfigModule } from '@nestjs/config';
+import { CategoriesModule } from './categories/categories.module';
 
 ConfigModule.forRoot();
 
@@ -11,6 +12,7 @@ ConfigModule.forRoot();
       `mongodb+srv://${process.env.DATABASE_USER}:${process.env.DATABASE_PASSWORD}@cluster0.bptbrp4.mongodb.net/smartRanking?retryWrites=true&w=majority`,
     ),
     PlayersModule,
+    CategoriesModule,
   ],
   controllers: [],
   providers: [],
