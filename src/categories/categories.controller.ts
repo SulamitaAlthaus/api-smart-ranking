@@ -3,6 +3,7 @@ import { CategoriesService } from './categories.service';
 import {
   Body,
   Controller,
+  Get,
   Post,
   UsePipes,
   ValidationPipe,
@@ -19,5 +20,10 @@ export class CategoriesController {
     @Body() createCategoryDto: CreateCategoryDto,
   ): Promise<Category> {
     return await this.categoriesService.createCategory(createCategoryDto);
+  }
+
+  @Get()
+  async getAllCategories(): Promise<Category[]> {
+    return this.categoriesService.getAllCategories();
   }
 }

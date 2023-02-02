@@ -22,4 +22,8 @@ export class CategoriesService {
     const newCategory = new this.categoryModel(createCategoryDto);
     return await newCategory.save();
   }
+
+  async getAllCategories(): Promise<Category[]> {
+    return await this.categoryModel.find().exec();
+  }
 }
