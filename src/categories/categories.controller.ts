@@ -1,9 +1,11 @@
+import { CategoriesValidationParametersPipe } from './pipes/categories-validation-parameters.pipe';
 import { CreateCategoryDto } from './dtos/create-categoy.dto';
 import { CategoriesService } from './categories.service';
 import {
   Body,
   Controller,
   Get,
+  Param,
   Post,
   UsePipes,
   ValidationPipe,
@@ -25,5 +27,12 @@ export class CategoriesController {
   @Get()
   async getAllCategories(): Promise<Category[]> {
     return this.categoriesService.getAllCategories();
+  }
+
+  @Get('/:_id')
+  async getCategory(
+    @Param('_id', CategoriesValidationParametersPipe) _id: string,
+  ): Promise<Category> {
+    return this.categoriesService.getCategory(_id);
   }
 }

@@ -1,7 +1,11 @@
 import { CreateCategoryDto } from './dtos/create-categoy.dto';
 import { Category } from './interfaces/category.interface';
 import { InjectModel } from '@nestjs/mongoose';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Model } from 'mongoose';
 
 @Injectable()
@@ -25,5 +29,13 @@ export class CategoriesService {
 
   async getAllCategories(): Promise<Category[]> {
     return await this.categoryModel.find().exec();
+  }
+
+  async getCategory(_id): Promise<Category> {
+    const categoryFind = await this.categoryModel.findOne({ _id }).exec();
+    if (!categoryFind) {
+      throw new NotFoundException('Categoria não encontrado.');
+    }
+    return categoryFind;
   }
 }
