@@ -1,3 +1,5 @@
+import { UpdatePlayerDto } from './dto/update-player.dto';
+import { PlayersValidationParametersPipe } from './pipes/players-validation-parameters.pipe';
 import { Player } from './interfaces/players.interface';
 import { PlayersService } from './players.service';
 import { CreatePlayerDto } from './dto/create-player.dto';
@@ -6,8 +8,9 @@ import {
   Controller,
   Delete,
   Get,
+  Param,
   Post,
-  Query,
+  Put,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -18,22 +21,36 @@ export class PlayersController {
 
   @Post()
   @UsePipes(ValidationPipe)
-  async createUpdatePlayer(@Body() createPlayerDto: CreatePlayerDto) {
-    const player = await this.playerService.createUpdatePlayer(createPlayerDto);
+  async createPlayer(@Body() createPlayerDto: CreatePlayerDto) {
+    return await this.playerService.createPlayer(createPlayerDto);
+  }
 
-    return player;
+  @Put('/:_id')
+  @UsePipes(ValidationPipe)
+  async updatePlayer(
+    @Body() updatePlayerDto: UpdatePlayerDto,
+    @Param('_id', PlayersValidationParametersPipe) _id: string,
+  ): Promise<Player> {
+    console.log('aqui');
+    return await this.playerService.updatePlayer(_id, updatePlayerDto);
   }
 
   @Get()
-  async getPlayers(@Query('email') email: string): Promise<Player | Player[]> {
-    if (email) {
-      return this.playerService.getPlayer(email);
-    } else {
-      return this.playerService.getAllPlayers();
-    }
+  async getAllPlayers(): Promise<Player[]> {
+    return this.playerService.getAllPlayers();
   }
-  @Delete()
-  async deletePlayer(@Query('email') email: string): Promise<boolean> {
-    return this.playerService.deletePlayer(email);
+
+  @Get('/:_id')
+  async getPlayer(
+    @Param('_id', PlayersValidationParametersPipe) _id: string,
+  ): Promise<Player> {
+    return this.playerService.getPlayer(_id);
+  }
+
+  @Delete('/:_id')
+  async deletePlayer(
+    @Param('_id', PlayersValidationParametersPipe) _id: string,
+  ): Promise<boolean> {
+    return this.playerService.deletePlayer(_id);
   }
 }
