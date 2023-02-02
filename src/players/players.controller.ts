@@ -31,7 +31,6 @@ export class PlayersController {
     @Body() updatePlayerDto: UpdatePlayerDto,
     @Param('_id', PlayersValidationParametersPipe) _id: string,
   ): Promise<Player> {
-    console.log('aqui');
     return await this.playerService.updatePlayer(_id, updatePlayerDto);
   }
 
