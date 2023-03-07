@@ -1,4 +1,6 @@
-import { CreateCategoryDto } from './dtos/create-categoy.dto';
+import { PlayersService } from './../players/players.service';
+import { UpdateCategoryDto } from './dtos/update-category.dto';
+import { CreateCategoryDto } from './dtos/create-category.dto';
 import { Category } from './interfaces/category.interface';
 import { InjectModel } from '@nestjs/mongoose';
 import {
@@ -12,6 +14,7 @@ import { Model } from 'mongoose';
 export class CategoriesService {
   constructor(
     @InjectModel('Category') private readonly categoryModel: Model<Category>,
+    private readonly playersService: PlayersService,
   ) {}
 
   async createCategory(
@@ -28,14 +31,76 @@ export class CategoriesService {
   }
 
   async getAllCategories(): Promise<Category[]> {
-    return await this.categoryModel.find().exec();
+    return await this.categoryModel.find().populate('players').exec();
   }
 
   async getCategory(_id): Promise<Category> {
-    const categoryFind = await this.categoryModel.findOne({ _id }).exec();
-    if (!categoryFind) {
-      throw new NotFoundException('Categoria não encontrado.');
+    const findCategory = await this.categoryModel.findOne({ _id }).exec();
+    if (!findCategory) {
+      throw new NotFoundException('Categoria não encontrada.');
     }
-    return categoryFind;
+    return findCategory;
+  }
+
+  async updateCategory(
+    _id: string,
+    updateCategoryDto: UpdateCategoryDto,
+  ): Promise<boolean> {
+    const findCategory = await this.categoryModel.findOne({ _id }).exec();
+    if (!findCategory) {
+      throw new NotFoundException('Categoria não encontrada.');
+    }
+    const updateCategory = await this.categoryModel
+      .findByIdAndUpdate({ _id }, { $set: updateCategoryDto })
+      .exec();
+    if (!updateCategory) {
+      return false;
+    }
+    return true;
+  }
+
+  async assignCategoryToPlayer(params: string[]): Promise<boolean> {
+    const _idCategory = params['_idCategory'];
+    const _idPlayer = params['_idPlayer'];
+
+    const findCategory = await this.categoryModel
+      .findOne({ _id: _idCategory })
+      .exec()
+      .catch((err) => console.log(err));
+    console.log('findCategory', typeof findCategory);
+
+    if (!findCategory) {
+      throw new BadRequestException('Categoria não cadastrada');
+    }
+
+    const player = await this.playersService
+      .getPlayer(_idPlayer)
+      .catch((err) => console.log(err));
+    console.log('player', typeof player);
+
+    if (!player) {
+      throw new BadRequestException('Jogador não cadastrado');
+    }
+
+    const playerInCategory = findCategory.players.filter(
+      (player) => player._id == _idPlayer,
+    );
+
+    if (playerInCategory.length > 0) {
+      throw new BadRequestException('Jogador já cadastrado');
+    }
+    findCategory.players.push(_idPlayer);
+    await findCategory.save();
+    return true;
+  }
+
+  async deleteCategory(_id): Promise<boolean> {
+    const categoryFind = await this.categoryModel
+      .findByIdAndDelete({ _id })
+      .exec();
+    if (!categoryFind) {
+      return false;
+    }
+    return true;
   }
 }
