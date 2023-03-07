@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { PlayersModule } from './players/players.module';
 import { ConfigModule } from '@nestjs/config';
 import { CategoriesModule } from './categories/categories.module';
+import { ChallengeModule } from './challenges/challenges.module';
 
 ConfigModule.forRoot();
 
@@ -13,6 +14,7 @@ ConfigModule.forRoot();
     ),
     PlayersModule,
     CategoriesModule,
+    ChallengeModule,
   ],
   controllers: [],
   providers: [],
