@@ -33,6 +33,15 @@ export class CategoriesService {
   async getAllCategories(): Promise<Category[]> {
     return await this.categoryModel.find().populate('players').exec();
   }
+  async getPlayerCategory(player): Promise<Category> {
+    return await this.categoryModel
+      .findOne({
+        players: {
+          $elemMatch: { $eq: { _id: player } },
+        },
+      })
+      .exec();
+  }
 
   async getCategory(_id): Promise<Category> {
     const findCategory = await this.categoryModel.findOne({ _id }).exec();
@@ -67,7 +76,6 @@ export class CategoriesService {
       .findOne({ _id: _idCategory })
       .exec()
       .catch((err) => console.log(err));
-    console.log('findCategory', typeof findCategory);
 
     if (!findCategory) {
       throw new BadRequestException('Categoria não cadastrada');
@@ -76,7 +84,6 @@ export class CategoriesService {
     const player = await this.playersService
       .getPlayer(_idPlayer)
       .catch((err) => console.log(err));
-    console.log('player', typeof player);
 
     if (!player) {
       throw new BadRequestException('Jogador não cadastrado');
