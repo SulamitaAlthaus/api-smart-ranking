@@ -9,7 +9,6 @@ export class StatusChallengeValidationPipe implements PipeTransform {
   ];
   transform(value: any) {
     const status = value.status.toUpperCase();
-    console.log('AQUI');
 
     if (!this.statusValidation(status)) {
       throw new BadRequestException(`${status} é um status inválido.`);
