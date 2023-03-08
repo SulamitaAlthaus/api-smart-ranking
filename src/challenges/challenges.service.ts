@@ -1,9 +1,17 @@
 import { CategoriesService } from './../categories/categories.service';
 import { PlayersService } from './../players/players.service';
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { CreateChallengeDto } from './dtos/create-challenge.dto';
+import {
+  CreateChallengeDto,
+  UpdateChallengeDto,
+} from './dtos/create-challenge.dto';
 import { Challenge } from './interfaces/challenge.interface';
 import { ChallengeStatus } from './interfaces/challenge-status.enum';
 
@@ -75,5 +83,47 @@ export class ChallengeService {
     newChallenge.status = ChallengeStatus.PENDING;
     this.logger.log(`newChallenge = ${JSON.stringify(newChallenge)}`);
     return await newChallenge.save();
+  }
+
+  async getChallenges(): Promise<Challenge[]> {
+    return await this.challengeModel.find().populate('players').exec();
+  }
+
+  async getPlayerChallenges(player: any): Promise<Challenge[]> {
+    const playerFind = await this.playersService.getPlayer(player);
+    if (!playerFind) {
+      throw new BadRequestException('Jogador não encontrado');
+    }
+
+    return await this.challengeModel
+      .find({
+        players: {
+          $elemMatch: { $eq: { _id: player } },
+        },
+      })
+      .exec();
+  }
+
+  async updateChallenge(
+    _id: string,
+    updateChallengeDto: UpdateChallengeDto,
+  ): Promise<boolean> {
+    const findChallenge = await this.challengeModel.findOne({ _id }).exec();
+    if (!findChallenge) {
+      throw new NotFoundException('Desafio não encontrado.');
+    }
+    if (updateChallengeDto.status) {
+      findChallenge.datetimeAnswer = new Date();
+    }
+    findChallenge.status = updateChallengeDto.status;
+    findChallenge.datetimeAnswer = updateChallengeDto.datetimeAnswer;
+    const updateChallenge = await this.challengeModel
+      .findByIdAndUpdate({ _id }, { $set: updateChallengeDto })
+      .exec();
+    if (!updateChallenge) {
+      return false;
+    }
+
+    return true;
   }
 }
