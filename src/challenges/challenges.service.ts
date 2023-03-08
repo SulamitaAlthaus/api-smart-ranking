@@ -3,6 +3,7 @@ import { PlayersService } from './../players/players.service';
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
@@ -10,15 +11,17 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import {
   CreateChallengeDto,
+  SetMatchChallengeDto,
   UpdateChallengeDto,
-} from './dtos/create-challenge.dto';
-import { Challenge } from './interfaces/challenge.interface';
+} from './dtos';
+import { Challenge, Match } from './interfaces/challenge.interface';
 import { ChallengeStatus } from './interfaces/challenge-status.enum';
 
 @Injectable()
 export class ChallengeService {
   constructor(
     @InjectModel('Challenge') private readonly challengeModel: Model<Challenge>,
+    @InjectModel('Match') private readonly matchModel: Model<Match>,
     private readonly playersService: PlayersService,
     private readonly categoriesService: CategoriesService,
   ) {}
@@ -86,7 +89,11 @@ export class ChallengeService {
   }
 
   async getChallenges(): Promise<Challenge[]> {
-    return await this.challengeModel.find().populate('players').exec();
+    return await this.challengeModel
+      .find()
+      .populate('players')
+      .populate('match')
+      .exec();
   }
 
   async getPlayerChallenges(player: any): Promise<Challenge[]> {
@@ -123,6 +130,64 @@ export class ChallengeService {
     if (!updateChallenge) {
       return false;
     }
+
+    return true;
+  }
+
+  async setMatchChallenge(
+    _id: string,
+    setMatchChallengeDto: SetMatchChallengeDto,
+  ): Promise<Match> {
+    const findChallenge = await this.challengeModel
+      .findOne({ _id })
+      .populate('match')
+      .exec();
+    if (!findChallenge) {
+      throw new NotFoundException('Desafio não encontrado.');
+    }
+    const playerFilter = findChallenge.players.filter(
+      (player) => player._id == setMatchChallengeDto.def,
+    );
+
+    this.logger.log(`findChallenge: ${findChallenge}`);
+    this.logger.log(`playerFilter: ${playerFilter}`);
+
+    if (playerFilter.length == 0) {
+      throw new NotFoundException('Jogador faz parte do desafio.');
+    }
+    const createMatch = new this.matchModel(setMatchChallengeDto);
+
+    createMatch.category = findChallenge.category;
+    createMatch.players = findChallenge.players;
+    const result = await createMatch.save();
+
+    findChallenge.status = ChallengeStatus.ACCOMPLISHED;
+    findChallenge.match = result._id;
+    findChallenge.save();
+
+    try {
+      await this.challengeModel
+        .findOneAndUpdate({ _id }, { $set: { findChallenge } })
+        .exec();
+    } catch (error) {
+      await this.matchModel.deleteOne({ _id: result._id }).exec();
+      throw new InternalServerErrorException();
+    }
+
+    return result;
+  }
+
+  async deleteChallenge(_id): Promise<boolean> {
+    const findChallenge = await this.challengeModel
+      .findOne({ _id })
+      .populate('match')
+      .exec();
+    if (!findChallenge) {
+      throw new NotFoundException('Desafio não encontrado.');
+    }
+
+    findChallenge.status = ChallengeStatus.CANCELED;
+    findChallenge.save();
 
     return true;
   }

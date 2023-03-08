@@ -2,6 +2,7 @@ import { ValidationParametersPipe } from './../common/pipes/validation-parameter
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Logger,
   Param,
@@ -14,9 +15,10 @@ import {
 import { ChallengeService } from './challenges.service';
 import {
   CreateChallengeDto,
+  SetMatchChallengeDto,
   UpdateChallengeDto,
-} from './dtos/create-challenge.dto';
-import { Challenge } from './interfaces/challenge.interface';
+} from './dtos';
+import { Challenge, Match } from './interfaces/challenge.interface';
 import { StatusChallengeValidationPipe } from './pipes/status-challenge-validation.pipe';
 
 @Controller('api/v1/challenges')
@@ -46,7 +48,25 @@ export class ChallengeController {
     @Body(StatusChallengeValidationPipe) updateChallengeDto: UpdateChallengeDto,
     @Param('_id', ValidationParametersPipe) _id: string,
   ): Promise<boolean> {
-    console.log('HERE');
     return this.challengesService.updateChallenge(_id, updateChallengeDto);
+  }
+  @Post('/:_id/match')
+  async setMatchChallenge(
+    @Param('_id', ValidationParametersPipe) _id: string,
+    @Body() setMatchChallengeDto: SetMatchChallengeDto,
+  ): Promise<Match> {
+    this.logger.log(
+      `setMatchChallenge: ${JSON.stringify(setMatchChallengeDto)}`,
+    );
+    return await this.challengesService.setMatchChallenge(
+      _id,
+      setMatchChallengeDto,
+    );
+  }
+  @Delete('/:_id')
+  async deleteChallenge(
+    @Param('_id', ValidationParametersPipe) _id: string,
+  ): Promise<boolean> {
+    return await this.challengesService.deleteChallenge(_id);
   }
 }
